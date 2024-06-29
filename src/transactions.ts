@@ -2,56 +2,30 @@ import {
   Address,
   Hex,
   bytesToBigInt,
-  encodeAbiParameters,
   encodeFunctionData,
   encodePacked,
   getContractAddress,
   hexToBigInt,
   keccak256,
-  parseAbiParameters,
   toBytes,
   zeroAddress,
-  zeroHash,
 } from "viem";
 import {
-  FractalModuleAbi,
   FractalRegistryAbi,
   GnosisSafeL2Abi,
   GnosisSafeProxyFactoryAbi,
   ModuleProxyFactoryAbi,
-  MultiSendCallOnlyAbi,
-  MultisigFreezeGuardAbi,
-  MultisigFreezeVotingAbi,
-  VotesErc20Abi,
 } from "./abis";
 import { randomBytes } from "crypto";
 
-export const createDeclareSubDaoTransaction = (
-  fractalRegistryAddress: Address,
-  subDaoAddress: Address
-) => {
-  return {
-    operation: 0,
-    to: fractalRegistryAddress,
-    value: 0n,
-    data: encodeFunctionData({
-      abi: FractalRegistryAbi,
-      functionName: "declareSubDAO",
-      args: [
-        subDaoAddress, // address _subDAOAddress
-      ],
-    }),
-  };
+const salt = (initializer: Hex, saltNonce: bigint) => {
+  return keccak256(
+    encodePacked(["bytes", "uint256"], [keccak256(initializer), saltNonce])
+  );
 };
 
 export const generateSaltNonce = () => {
   return bytesToBigInt(randomBytes(32));
-};
-
-export const salt = (initializer: Hex, saltNonce: bigint) => {
-  return keccak256(
-    encodePacked(["bytes", "uint256"], [keccak256(initializer), saltNonce])
-  );
 };
 
 export const encodeMultiSend = (
@@ -73,114 +47,12 @@ export const encodeMultiSend = (
     .join("")}`;
 };
 
-export const getGnosisSafeInitializer = (
-  multisigOwners: Address[],
-  multiSendCallOnlyAddress: Address,
-  compatibilityFallbackHandlerAddress: Address
-) => {
-  return encodeFunctionData({
-    abi: GnosisSafeL2Abi,
-    functionName: "setup",
-    args: [
-      [...multisigOwners, multiSendCallOnlyAddress], // address[] _owners
-      1n, // uint256 _threshold // hardcode to 1
-      zeroAddress, // address to
-      zeroHash, // bytes data
-      compatibilityFallbackHandlerAddress, // address fallbackHandler
-      zeroAddress, // address paymentToken
-      0n, // uint256 payment
-      zeroAddress, // address paymentReceiver
-    ],
-  });
-};
-
-export const getFractalModuleInitializer = (
-  moduleOwner: Address,
-  moduleAvatar: Address
-) => {
-  return encodeFunctionData({
-    abi: FractalModuleAbi,
-    functionName: "setUp",
-    args: [
-      encodeAbiParameters(
-        parseAbiParameters("address, address, address, address[]"),
-        [
-          moduleOwner, // address _owner
-          moduleAvatar, // address _avatar
-          moduleAvatar, // address _target
-          [], // address[] _controllers
-        ]
-      ),
-    ],
-  });
-};
-
-export const getTokenModuleInitializer = (
-  name: string,
-  symbol: string,
-  addresses: Address[],
-  amounts: bigint[]
-) => {
-  return encodeFunctionData({
-    abi: VotesErc20Abi,
-    functionName: "setUp",
-    args: [
-      encodeAbiParameters(
-        parseAbiParameters("string, string, address[], uint256[]"),
-        [name, symbol, addresses, amounts]
-      ),
-    ],
-  });
-};
-
-export const getMultisigFreezeVotingInitializer = (
-  parentSafe: Address,
-  freezeVotesThreshold: bigint,
-  freezeProposalPeriod: number,
-  freezePeriod: number
-) => {
-  return encodeFunctionData({
-    abi: MultisigFreezeVotingAbi,
-    functionName: "setUp",
-    args: [
-      encodeAbiParameters(
-        parseAbiParameters("address, uint256, uint32, uint32, address"),
-        [
-          parentSafe,
-          freezeVotesThreshold,
-          freezeProposalPeriod,
-          freezePeriod,
-          parentSafe,
-        ]
-      ),
-    ],
-  });
-};
-
-export const getMultisigFreezeGuardInitializer = (
-  safe: Address,
-  parentSafe: Address,
-  freezeVoting: Address,
-  timelockPeriod: number,
-  executionPeriod: number
-) => {
-  return encodeFunctionData({
-    abi: MultisigFreezeGuardAbi,
-    functionName: "setUp",
-    args: [
-      encodeAbiParameters(
-        parseAbiParameters("uint32, uint32, address, address, address"),
-        [timelockPeriod, executionPeriod, parentSafe, freezeVoting, safe]
-      ),
-    ],
-  });
-};
-
 export const getPredictedSafeAddress = (
   gnosisSafeProxyCreationCode: Hex,
   gnosisSafeProxyFactoryContractAddress: Address,
   gnosisSafeL2SingletonAddress: Address,
-  salt: Hex
+  gnosisSafeInitilizationData: Hex,
+  saltNonce: bigint
 ) => {
   return getContractAddress({
     bytecode: encodePacked(
@@ -189,7 +61,7 @@ export const getPredictedSafeAddress = (
     ),
     from: gnosisSafeProxyFactoryContractAddress,
     opcode: "CREATE2",
-    salt: salt,
+    salt: salt(gnosisSafeInitilizationData, saltNonce),
   });
 };
 
@@ -251,23 +123,6 @@ export const createDeployModuleTransaction = (
       ],
     }),
   };
-};
-
-export const multiSendFunctionData = (
-  multiSendTransactions: {
-    to: Address;
-    value: bigint;
-    data: Hex;
-    operation: number;
-  }[]
-) => {
-  return encodeFunctionData({
-    abi: MultiSendCallOnlyAbi,
-    functionName: "multiSend",
-    args: [
-      encodeMultiSend(multiSendTransactions), // bytes transactions
-    ],
-  });
 };
 
 export const createSafeExecTransaction = (
@@ -369,6 +224,24 @@ export const createUpdateDaoNameTransaction = (
       functionName: "updateDAOName",
       args: [
         daoName, // string _name
+      ],
+    }),
+  };
+};
+
+export const createDeclareSubDaoTransaction = (
+  fractalRegistryAddress: Address,
+  subDaoAddress: Address
+) => {
+  return {
+    operation: 0,
+    to: fractalRegistryAddress,
+    value: 0n,
+    data: encodeFunctionData({
+      abi: FractalRegistryAbi,
+      functionName: "declareSubDAO",
+      args: [
+        subDaoAddress, // address _subDAOAddress
       ],
     }),
   };

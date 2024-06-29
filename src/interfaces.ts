@@ -3,7 +3,8 @@ import {
   Address,
   Chain,
   Hex,
-  HttpTransport,
+  PublicClient,
+  Transport,
   WalletClient,
 } from "viem";
 
@@ -19,17 +20,13 @@ export interface Safe {
   children?: Safe[];
 }
 
-export interface SafeFirstPass {
-  name: string;
-  owners: Address[];
-  threshold: bigint;
-  allocation: bigint;
+export interface SafeProcessed extends Safe {
+  children?: SafeProcessed[];
   firstPass: {
     saltNonce: bigint;
     initializationData: Hex;
     predictedAddress: Address;
   };
-  children?: SafeFirstPass[];
 }
 
 export interface Token {
@@ -49,27 +46,23 @@ export interface Data {
   safes: Safe;
 }
 
+export interface DataProcessed extends Data {
+  safes: SafeProcessed;
+}
+
 export interface Config {
-  walletClient: WalletClient<HttpTransport, Chain, Account>;
-  network: {
-    chain: Chain;
-  };
+  publicClient: PublicClient<Transport, Chain>;
+  walletClient: WalletClient<Transport, Chain, Account> | undefined;
   contractAddresses: {
-    fractal: {
-      fractalRegistryAddress: Address;
-    };
-    safe: {
-      multiSendCallOnlyAddress: Address;
-      gnosisSafeL2SingletonAddress: Address;
-      gnosisSafeProxyFactoryAddress: Address;
-      compatibilityFallbackHandlerAddress: Address;
-    };
-    zodiac: {
-      multisigFreezeVotingMasterCopyAddress: Address;
-      multisigFreezeGuardMasterCopyAddress: Address;
-      moduleProxyFactoryAddress: Address;
-      fractalModuleMasterCopyAddress: Address;
-      votesErc20MasterCopyAddress: Address;
-    };
+    fractalRegistryAddress: Address;
+    multiSendCallOnlyAddress: Address;
+    gnosisSafeL2SingletonAddress: Address;
+    gnosisSafeProxyFactoryAddress: Address;
+    compatibilityFallbackHandlerAddress: Address;
+    multisigFreezeVotingMasterCopyAddress: Address;
+    multisigFreezeGuardMasterCopyAddress: Address;
+    moduleProxyFactoryAddress: Address;
+    fractalModuleMasterCopyAddress: Address;
+    votesErc20MasterCopyAddress: Address;
   };
 }

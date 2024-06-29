@@ -1,5 +1,11 @@
-import { Address, zeroAddress } from "viem";
-import { Config, SafeFirstPass } from "./interfaces";
+import {
+  Address,
+  encodeAbiParameters,
+  encodeFunctionData,
+  parseAbiParameters,
+  zeroAddress,
+} from "viem";
+import { Config, SafeProcessed } from "./interfaces";
 import {
   createDeclareSubDaoTransaction,
   createDeployModuleTransaction,
@@ -9,16 +15,19 @@ import {
   createSafeExecTransaction,
   createSetGuardTransaction,
   createUpdateDaoNameTransaction,
-  getFractalModuleInitializer,
-  getMultisigFreezeGuardInitializer,
-  getMultisigFreezeVotingInitializer,
+  encodeMultiSend,
   getPredictedModuleAddress,
-  multiSendFunctionData,
 } from "./transactions";
+import {
+  FractalModuleAbi,
+  MultiSendCallOnlyAbi,
+  MultisigFreezeGuardAbi,
+  MultisigFreezeVotingAbi,
+} from "./abis";
 
 const getMultiSendsFromSafe = (
   config: Config,
-  node: SafeFirstPass,
+  node: SafeProcessed,
   nodeAddress: Address,
   parentAddress: Address,
   saltNonce: bigint
@@ -26,23 +35,34 @@ const getMultiSendsFromSafe = (
   const transactions = [];
 
   if (parentAddress !== zeroAddress) {
-    const fractalModuleInitializer = getFractalModuleInitializer(
-      parentAddress,
-      nodeAddress
-    );
+    const fractalModuleInitializer = encodeFunctionData({
+      abi: FractalModuleAbi,
+      functionName: "setUp",
+      args: [
+        encodeAbiParameters(
+          parseAbiParameters("address, address, address, address[]"),
+          [
+            parentAddress, // address _owner
+            nodeAddress, // address _avatar
+            nodeAddress, // address _target
+            [], // address[] _controllers
+          ]
+        ),
+      ],
+    });
 
     transactions.push(
       createDeployModuleTransaction(
-        config.contractAddresses.zodiac.moduleProxyFactoryAddress,
-        config.contractAddresses.zodiac.fractalModuleMasterCopyAddress,
+        config.contractAddresses.moduleProxyFactoryAddress,
+        config.contractAddresses.fractalModuleMasterCopyAddress,
         fractalModuleInitializer,
         saltNonce
       )
     );
 
     const predictedFractalModuleAddress = getPredictedModuleAddress(
-      config.contractAddresses.zodiac.fractalModuleMasterCopyAddress,
-      config.contractAddresses.zodiac.moduleProxyFactoryAddress,
+      config.contractAddresses.fractalModuleMasterCopyAddress,
+      config.contractAddresses.moduleProxyFactoryAddress,
       fractalModuleInitializer,
       saltNonce
     );
@@ -51,49 +71,68 @@ const getMultiSendsFromSafe = (
       createEnableModuleTransaction(nodeAddress, predictedFractalModuleAddress)
     );
 
-    const multisigFreezeVotingInitializer = getMultisigFreezeVotingInitializer(
-      parentAddress,
-      0n, // TODO
-      0, // TODO
-      0 // TODO
-    );
+    const multisigFreezeVotingInitializer = encodeFunctionData({
+      abi: MultisigFreezeVotingAbi,
+      functionName: "setUp",
+      args: [
+        encodeAbiParameters(
+          parseAbiParameters("address, uint256, uint32, uint32, address"),
+          [
+            parentAddress,
+            0n, // TODO freezeVotesThreshold,
+            0, // TODO freezeProposalPeriod,
+            0, // TODO freezePeriod,
+            parentAddress,
+          ]
+        ),
+      ],
+    });
 
     transactions.push(
       createDeployModuleTransaction(
-        config.contractAddresses.zodiac.moduleProxyFactoryAddress,
-        config.contractAddresses.zodiac.multisigFreezeVotingMasterCopyAddress,
+        config.contractAddresses.moduleProxyFactoryAddress,
+        config.contractAddresses.multisigFreezeVotingMasterCopyAddress,
         multisigFreezeVotingInitializer,
         saltNonce
       )
     );
 
     const predictedMultisigFreezeVotingAddress = getPredictedModuleAddress(
-      config.contractAddresses.zodiac.multisigFreezeVotingMasterCopyAddress,
-      config.contractAddresses.zodiac.moduleProxyFactoryAddress,
+      config.contractAddresses.multisigFreezeVotingMasterCopyAddress,
+      config.contractAddresses.moduleProxyFactoryAddress,
       multisigFreezeVotingInitializer,
       saltNonce
     );
 
-    const multisigFreezeGuardInitializer = getMultisigFreezeGuardInitializer(
-      nodeAddress,
-      parentAddress,
-      predictedMultisigFreezeVotingAddress,
-      0, // TODO
-      0 // TODO
-    );
+    const multisigFreezeGuardInitializer = encodeFunctionData({
+      abi: MultisigFreezeGuardAbi,
+      functionName: "setUp",
+      args: [
+        encodeAbiParameters(
+          parseAbiParameters("uint32, uint32, address, address, address"),
+          [
+            0, // TODO timelockPeriod,
+            0, // TODO executionPeriod,
+            parentAddress,
+            predictedMultisigFreezeVotingAddress,
+            nodeAddress,
+          ]
+        ),
+      ],
+    });
 
     transactions.push(
       createDeployModuleTransaction(
-        config.contractAddresses.zodiac.moduleProxyFactoryAddress,
-        config.contractAddresses.zodiac.multisigFreezeGuardMasterCopyAddress,
+        config.contractAddresses.moduleProxyFactoryAddress,
+        config.contractAddresses.multisigFreezeGuardMasterCopyAddress,
         multisigFreezeGuardInitializer,
         saltNonce
       )
     );
 
     const predictedMultisigFreezeGuardAddress = getPredictedModuleAddress(
-      config.contractAddresses.zodiac.multisigFreezeGuardMasterCopyAddress,
-      config.contractAddresses.zodiac.moduleProxyFactoryAddress,
+      config.contractAddresses.multisigFreezeGuardMasterCopyAddress,
+      config.contractAddresses.moduleProxyFactoryAddress,
       multisigFreezeGuardInitializer,
       saltNonce
     );
@@ -108,7 +147,7 @@ const getMultiSendsFromSafe = (
 
   transactions.push(
     createUpdateDaoNameTransaction(
-      config.contractAddresses.fractal.fractalRegistryAddress,
+      config.contractAddresses.fractalRegistryAddress,
       node.name
     )
   );
@@ -117,7 +156,7 @@ const getMultiSendsFromSafe = (
     node.children.forEach((child) => {
       transactions.push(
         createDeclareSubDaoTransaction(
-          config.contractAddresses.fractal.fractalRegistryAddress,
+          config.contractAddresses.fractalRegistryAddress,
           child.firstPass.predictedAddress
         )
       );
@@ -127,7 +166,7 @@ const getMultiSendsFromSafe = (
   transactions.push(
     createRemoveOwnerTransaction(
       nodeAddress,
-      config.contractAddresses.safe.multiSendCallOnlyAddress,
+      config.contractAddresses.multiSendCallOnlyAddress,
       node.owners,
       node.threshold
     )
@@ -138,12 +177,12 @@ const getMultiSendsFromSafe = (
 
 const processNode = async (
   config: Config,
-  node: SafeFirstPass,
+  node: SafeProcessed,
   parentAddress: Address
 ) => {
   const deploySafeTransaction = createDeploySafeTransaction(
-    config.contractAddresses.safe.gnosisSafeProxyFactoryAddress,
-    config.contractAddresses.safe.gnosisSafeL2SingletonAddress,
+    config.contractAddresses.gnosisSafeProxyFactoryAddress,
+    config.contractAddresses.gnosisSafeL2SingletonAddress,
     node.firstPass.initializationData,
     node.firstPass.saltNonce
   );
@@ -156,11 +195,15 @@ const processNode = async (
     node.firstPass.saltNonce
   );
 
-  const multiSendData = multiSendFunctionData(multiSendsFromSafe);
+  const multiSendData = encodeFunctionData({
+    abi: MultiSendCallOnlyAbi,
+    functionName: "multiSend",
+    args: [encodeMultiSend(multiSendsFromSafe)],
+  });
 
   const processSafeTransaction = createSafeExecTransaction(
     node.firstPass.predictedAddress,
-    config.contractAddresses.safe.multiSendCallOnlyAddress,
+    config.contractAddresses.multiSendCallOnlyAddress,
     multiSendData
   );
 
@@ -173,7 +216,7 @@ const processNode = async (
 
 export const createSafesTransactions = async (
   config: Config,
-  node: SafeFirstPass,
+  node: SafeProcessed,
   parentAddress?: Address,
   transactions?: {
     operation: number;

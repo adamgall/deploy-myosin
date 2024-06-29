@@ -127,22 +127,25 @@ const getChain = (name: string) => {
   return value;
 };
 
-const getHexEnvVar = (name: string) => {
-  const envVar = getEnvVar(name);
+const getPrivateKey = () => {
+  const envVar = process.env["PRIVATE_KEY"];
 
-  const value = envVar;
-
-  if (!isHex(value)) {
-    console.error(`${name} environment variable is malformed!`);
-    process.exit(1);
+  if (envVar === undefined) {
+    return undefined;
   }
 
-  return value;
+  const trimmed = envVar.trim();
+
+  if (!isHex(trimmed)) {
+    return undefined;
+  }
+
+  return trimmed;
 };
 
 export const getConfigRaw = () => {
   const chain = getChain("CHAIN");
-  const privateKey = getHexEnvVar("PRIVATE_KEY");
+  const privateKey = getPrivateKey();
 
   const gnosisSafeProxyFactoryAddress = getSingletonAddress(
     chain,
