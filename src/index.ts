@@ -4,7 +4,12 @@ import data from "./data";
 import { getContract } from "viem";
 import { MultiSendCallOnlyAbi } from "./abis";
 import { createSafesTransactions } from "./processSafes";
-import { doSafesFirstPass } from "./firstPass";
+import {
+  doAirdropsFirstPass,
+  doSafesFirstPass,
+  doTokenFirstPass,
+} from "./firstPass";
+import { createTokenTransactions } from "./tokens";
 
 (async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -15,11 +20,18 @@ import { doSafesFirstPass } from "./firstPass";
   const config = await getValidatedConfig();
 
   const safesFirstPass = await doSafesFirstPass(config, data.safes);
+  const airdropsFirstPass = doAirdropsFirstPass(data.airdrop);
+  const tokenFirstPass = doTokenFirstPass(data.token);
 
-  const setupSafesTransactions = await createSafesTransactions(
-    config,
-    safesFirstPass
-  );
+  const allMultiSendTransactions = [
+    ...(await createTokenTransactions(
+      config,
+      safesFirstPass,
+      airdropsFirstPass,
+      tokenFirstPass
+    )),
+    ...(await createSafesTransactions(config, safesFirstPass)),
+  ];
 
   const multiSendCallOnlyContract = getContract({
     abi: MultiSendCallOnlyAbi,
@@ -28,7 +40,7 @@ import { doSafesFirstPass } from "./firstPass";
   });
 
   const transaction = await multiSendCallOnlyContract.simulate.multiSend([
-    encodeMultiSend(setupSafesTransactions),
+    encodeMultiSend(allMultiSendTransactions),
   ]);
 
   console.log({ transaction });

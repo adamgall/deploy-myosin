@@ -22,6 +22,7 @@ import {
   MultiSendCallOnlyAbi,
   MultisigFreezeGuardAbi,
   MultisigFreezeVotingAbi,
+  VotesErc20Abi,
 } from "./abis";
 import { randomBytes } from "crypto";
 
@@ -109,6 +110,24 @@ export const getFractalModuleInitializer = (
           moduleAvatar, // address _target
           [], // address[] _controllers
         ]
+      ),
+    ],
+  });
+};
+
+export const getTokenModuleInitializer = (
+  name: string,
+  symbol: string,
+  addresses: Address[],
+  amounts: bigint[]
+) => {
+  return encodeFunctionData({
+    abi: VotesErc20Abi,
+    functionName: "setUp",
+    args: [
+      encodeAbiParameters(
+        parseAbiParameters("string, string, address[], uint256[]"),
+        [name, symbol, addresses, amounts]
       ),
     ],
   });

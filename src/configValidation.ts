@@ -1,5 +1,5 @@
 import { getConfigRaw } from "./configParsing";
-import { getPublicClient, getWalletClient } from "./clients";
+import { getWalletClient } from "./clients";
 import { Config } from "./interfaces";
 
 // const checkMultisigThreshold = (
@@ -17,7 +17,6 @@ import { Config } from "./interfaces";
 export const getValidatedConfig = async () => {
   const configRaw = getConfigRaw();
 
-  const publicClient = getPublicClient(configRaw.chain);
   const walletClient = getWalletClient(configRaw.chain, configRaw.privateKey);
 
   // checkMultisigThreshold(
@@ -26,7 +25,6 @@ export const getValidatedConfig = async () => {
   // );
 
   const config: Config = {
-    publicClient,
     walletClient,
     network: {
       chain: configRaw.chain,
@@ -36,7 +34,6 @@ export const getValidatedConfig = async () => {
         fractalRegistryAddress: configRaw.fractalRegistryAddress,
       },
       safe: {
-        multiSendAddress: configRaw.multiSendAddress,
         multiSendCallOnlyAddress: configRaw.multiSendCallOnlyAddress,
         gnosisSafeL2SingletonAddress: configRaw.gnosisSafeL2SingletonAddress,
         gnosisSafeProxyFactoryAddress: configRaw.gnosisSafeProxyFactoryAddress,
@@ -51,6 +48,7 @@ export const getValidatedConfig = async () => {
         moduleProxyFactoryAddress: configRaw.moduleProxyFactoryAddress,
         fractalModuleMasterCopyAddress:
           configRaw.fractalModuleMasterCopyAddress,
+        votesErc20MasterCopyAddress: configRaw.votesErc20MasterCopyAddress,
       },
     },
   };
@@ -72,10 +70,6 @@ export const getValidatedConfig = async () => {
       value: config.contractAddresses.fractal.fractalRegistryAddress,
     },
     {
-      property: "MultiSend address",
-      value: config.contractAddresses.safe.multiSendAddress,
-    },
-    {
       property: "MultiSendCallOnly address",
       value: config.contractAddresses.safe.multiSendCallOnlyAddress,
     },
@@ -94,6 +88,20 @@ export const getValidatedConfig = async () => {
     {
       property: "CompatibilityFallbackHandler address",
       value: config.contractAddresses.safe.compatibilityFallbackHandlerAddress,
+    },
+    {
+      property: "MultisigFreezeVoting address",
+      value:
+        config.contractAddresses.zodiac.multisigFreezeVotingMasterCopyAddress,
+    },
+    {
+      property: "MultisigFreezeGuard address",
+      value:
+        config.contractAddresses.zodiac.multisigFreezeGuardMasterCopyAddress,
+    },
+    {
+      property: "VotesErc20 address",
+      value: config.contractAddresses.zodiac.votesErc20MasterCopyAddress,
     },
   ]);
   console.log("");

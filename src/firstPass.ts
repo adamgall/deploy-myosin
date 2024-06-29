@@ -1,5 +1,5 @@
-import { getContract } from "viem";
-import { Config, Safe, SafeFirstPass } from "./interfaces";
+import { getContract, parseEther } from "viem";
+import { Airdrop, Config, Safe, SafeFirstPass, Token } from "./interfaces";
 import {
   generateSaltNonce,
   getGnosisSafeInitializer,
@@ -21,7 +21,7 @@ const calculateFirstPass = async (config: Config, node: Safe) => {
     await getContract({
       abi: GnosisSafeProxyFactoryAbi,
       address: config.contractAddresses.safe.gnosisSafeProxyFactoryAddress,
-      client: config.publicClient,
+      client: config.walletClient,
     }).read.proxyCreationCode(),
     config.contractAddresses.safe.gnosisSafeProxyFactoryAddress,
     config.contractAddresses.safe.gnosisSafeL2SingletonAddress,
@@ -32,7 +32,7 @@ const calculateFirstPass = async (config: Config, node: Safe) => {
     name: node.name,
     owners: node.owners,
     threshold: node.threshold,
-    allocation: node.allocation,
+    allocation: parseEther(node.allocation.toString()),
     firstPass: {
       saltNonce,
       initializationData,
@@ -59,4 +59,18 @@ export const doSafesFirstPass = async (
   } else {
     return { ...newNode };
   }
+};
+
+export const doAirdropsFirstPass = (airdrops: Airdrop[]) => {
+  return airdrops.map((a) => ({
+    address: a.address,
+    amount: parseEther(a.amount.toString()),
+  }));
+};
+
+export const doTokenFirstPass = (token: Token): Token => {
+  return {
+    ...token,
+    supply: parseEther(token.supply.toString()),
+  };
 };

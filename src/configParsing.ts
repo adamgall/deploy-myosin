@@ -7,12 +7,12 @@ enum SingletonAddressNames {
   GnosisSafeL2Singleton,
   ModuleProxyFactory,
   FractalModuleMasterCopy,
-  MultiSend,
   MultiSendCallOnly,
   CompatibilityFallbackHandler,
   FractalRegistry,
   MultisigFreezeVoting,
   MultisigFreezeGuard,
+  VotesErc20,
 }
 
 const getSingletonAddress = (chain: Chain, name: SingletonAddressNames) => {
@@ -34,9 +34,6 @@ const getSingletonAddress = (chain: Chain, name: SingletonAddressNames) => {
         case SingletonAddressNames.MultiSendCallOnly: {
           return getAddress("0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B");
         }
-        case SingletonAddressNames.MultiSend: {
-          return getAddress("0x998739BFdAAdde7C933B942a68053933098f9EDa");
-        }
         case SingletonAddressNames.CompatibilityFallbackHandler: {
           return getAddress("0x017062a1dE2FE6b99BE3d9d37841FeD19F573804");
         }
@@ -48,6 +45,9 @@ const getSingletonAddress = (chain: Chain, name: SingletonAddressNames) => {
         }
         case SingletonAddressNames.MultisigFreezeGuard: {
           return getAddress("0xcd6c149b3C0FE7284005869fa15080e85887c8F1");
+        }
+        case SingletonAddressNames.VotesErc20: {
+          return getAddress("0x7bE7B12DA74d48E541131DB1626Ee651A2105c45");
         }
         default: {
           console.error(`Address ${name} not set!`);
@@ -73,9 +73,6 @@ const getSingletonAddress = (chain: Chain, name: SingletonAddressNames) => {
         case SingletonAddressNames.MultiSendCallOnly: {
           return getAddress("0xA1dabEF33b3B82c7814B6D82A79e50F4AC44102B");
         }
-        case SingletonAddressNames.MultiSend: {
-          return getAddress("0x998739BFdAAdde7C933B942a68053933098f9EDa");
-        }
         case SingletonAddressNames.CompatibilityFallbackHandler: {
           return getAddress("0x017062a1dE2FE6b99BE3d9d37841FeD19F573804");
         }
@@ -87,6 +84,9 @@ const getSingletonAddress = (chain: Chain, name: SingletonAddressNames) => {
         }
         case SingletonAddressNames.MultisigFreezeGuard: {
           return getAddress("0x4B3c155C9bB21F482E894B4321Ac4d2DCF4A6746");
+        }
+        case SingletonAddressNames.VotesErc20: {
+          return getAddress("0x51c852BdF6ed00bAca4225EE940b426a56853ec9");
         }
         default: {
           console.error(`Address ${name} not set!`);
@@ -160,10 +160,6 @@ export const getConfigRaw = () => {
     chain,
     SingletonAddressNames.FractalModuleMasterCopy
   );
-  const multiSendAddress = getSingletonAddress(
-    chain,
-    SingletonAddressNames.MultiSend
-  );
   const multiSendCallOnlyAddress = getSingletonAddress(
     chain,
     SingletonAddressNames.MultiSendCallOnly
@@ -184,12 +180,15 @@ export const getConfigRaw = () => {
     chain,
     SingletonAddressNames.MultisigFreezeGuard
   );
+  const votesErc20MasterCopyAddress = getSingletonAddress(
+    chain,
+    SingletonAddressNames.VotesErc20
+  );
 
   return {
     chain,
     privateKey,
     fractalRegistryAddress,
-    multiSendAddress,
     multiSendCallOnlyAddress,
     gnosisSafeL2SingletonAddress,
     gnosisSafeProxyFactoryAddress,
@@ -198,5 +197,6 @@ export const getConfigRaw = () => {
     fractalModuleMasterCopyAddress,
     multisigFreezeVotingMasterCopyAddress,
     multisigFreezeGuardMasterCopyAddress,
+    votesErc20MasterCopyAddress,
   };
 };

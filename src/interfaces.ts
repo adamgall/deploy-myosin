@@ -4,11 +4,12 @@ import {
   Chain,
   Hex,
   HttpTransport,
-  PublicClient,
   WalletClient,
 } from "viem";
 
 export const twoAddress = "0x0000000000000000000000000000000000000002";
+export const threeAddress = "0x0000000000000000000000000000000000000003";
+export const fourAddress = "0x0000000000000000000000000000000000000004";
 
 export interface Safe {
   name: string;
@@ -35,7 +36,6 @@ export interface Token {
   name: string;
   symbol: string;
   supply: bigint;
-  decimals: 18;
 }
 
 export interface Airdrop {
@@ -50,7 +50,6 @@ export interface Data {
 }
 
 export interface Config {
-  publicClient: PublicClient;
   walletClient: WalletClient<HttpTransport, Chain, Account>;
   network: {
     chain: Chain;
@@ -60,7 +59,6 @@ export interface Config {
       fractalRegistryAddress: Address;
     };
     safe: {
-      multiSendAddress: Address;
       multiSendCallOnlyAddress: Address;
       gnosisSafeL2SingletonAddress: Address;
       gnosisSafeProxyFactoryAddress: Address;
@@ -71,6 +69,7 @@ export interface Config {
       multisigFreezeGuardMasterCopyAddress: Address;
       moduleProxyFactoryAddress: Address;
       fractalModuleMasterCopyAddress: Address;
+      votesErc20MasterCopyAddress: Address;
     };
   };
 }
