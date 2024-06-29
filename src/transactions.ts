@@ -251,23 +251,6 @@ export const multiSendFunctionData = (
   });
 };
 
-// export const createMultiSendTransaction = (
-//   multiSendCallOnlyAddress: Address,
-//   multiSendTransactions: {
-//     operation: number;
-//     to: Address;
-//     value: bigint;
-//     data: Hex;
-//   }[]
-// ) => {
-//   return {
-//     to: multiSendCallOnlyAddress,
-//     operation: 0,
-//     value: 0n,
-//     data: multiSendFunctionData(multiSendTransactions),
-//   };
-// };
-
 export const createSafeExecTransaction = (
   safeAddress: Address,
   target: Address,

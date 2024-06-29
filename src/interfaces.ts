@@ -1,4 +1,12 @@
-import { Address, Chain, PublicClient, WalletClient } from "viem";
+import {
+  Account,
+  Address,
+  Chain,
+  Hex,
+  HttpTransport,
+  PublicClient,
+  WalletClient,
+} from "viem";
 
 export const twoAddress = "0x0000000000000000000000000000000000000002";
 
@@ -8,6 +16,19 @@ export interface Safe {
   threshold: bigint;
   allocation: bigint;
   children?: Safe[];
+}
+
+export interface SafeFirstPass {
+  name: string;
+  owners: Address[];
+  threshold: bigint;
+  allocation: bigint;
+  firstPass: {
+    saltNonce: bigint;
+    initializationData: Hex;
+    predictedAddress: Address;
+  };
+  children?: SafeFirstPass[];
 }
 
 export interface Token {
@@ -30,7 +51,7 @@ export interface Data {
 
 export interface Config {
   publicClient: PublicClient;
-  walletClient: WalletClient;
+  walletClient: WalletClient<HttpTransport, Chain, Account>;
   network: {
     chain: Chain;
   };
