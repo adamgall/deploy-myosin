@@ -46,7 +46,7 @@ export interface Airdrop {
 export interface Data {
   token: Token;
   airdrop: Airdrop[];
-  safes: Safe[];
+  safes: Safe;
 }
 
 export interface Config {

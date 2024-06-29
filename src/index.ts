@@ -3,7 +3,7 @@ import { getValidatedConfig } from "./configValidation";
 import data from "./data";
 import { getContract } from "viem";
 import { MultiSendCallOnlyAbi } from "./abis";
-import { createTransactions } from "./processSafes";
+import { createSafesTransactions } from "./processSafes";
 import { doSafesFirstPass } from "./firstPass";
 
 (async () => {
@@ -16,7 +16,7 @@ import { doSafesFirstPass } from "./firstPass";
 
   const safesFirstPass = await doSafesFirstPass(config, data.safes);
 
-  const multisendTransactions = await createTransactions(
+  const setupSafesTransactions = await createSafesTransactions(
     config,
     safesFirstPass
   );
@@ -27,8 +27,8 @@ import { doSafesFirstPass } from "./firstPass";
     client: config.walletClient,
   });
 
-  const transaction = await multiSendCallOnlyContract.write.multiSend([
-    encodeMultiSend(multisendTransactions),
+  const transaction = await multiSendCallOnlyContract.simulate.multiSend([
+    encodeMultiSend(setupSafesTransactions),
   ]);
 
   console.log({ transaction });

@@ -1,5 +1,5 @@
 import { Address, zeroAddress } from "viem";
-import { Config, Safe, SafeFirstPass } from "./interfaces";
+import { Config, SafeFirstPass } from "./interfaces";
 import {
   createDeclareSubDaoTransaction,
   createDeployModuleTransaction,
@@ -171,26 +171,26 @@ const processNode = async (
   };
 };
 
-const traverse = async (
+export const createSafesTransactions = async (
   config: Config,
   node: SafeFirstPass,
-  parentAddress: Address,
-  transactions: {
+  parentAddress?: Address,
+  transactions?: {
     operation: number;
     to: `0x${string}`;
     value: bigint;
     data: `0x${string}`;
   }[]
 ) => {
-  const newNode = await processNode(config, node, parentAddress);
+  const newNode = await processNode(config, node, parentAddress ?? zeroAddress);
   let accumulatedTransactions = [
-    ...transactions,
+    ...(transactions ?? []),
     ...newNode.allNodeTransactions,
   ];
 
   if (node.children && node.children.length > 0) {
     for (const child of node.children) {
-      accumulatedTransactions = await traverse(
+      accumulatedTransactions = await createSafesTransactions(
         config,
         child,
         node.firstPass.predictedAddress,
@@ -200,23 +200,4 @@ const traverse = async (
   }
 
   return accumulatedTransactions;
-};
-
-export const createTransactions = async (
-  config: Config,
-  safes: SafeFirstPass[]
-) => {
-  let allTransactions: {
-    operation: number;
-    to: `0x${string}`;
-    value: bigint;
-    data: `0x${string}`;
-  }[] = [];
-
-  for (const safe of safes) {
-    const safeTransactions = await traverse(config, safe, zeroAddress, []);
-    allTransactions = [...allTransactions, ...safeTransactions];
-  }
-
-  return allTransactions;
 };

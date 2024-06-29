@@ -43,13 +43,13 @@ const calculateFirstPass = async (config: Config, node: Safe) => {
   return safeFirstPass;
 };
 
-const traverseFirstPass = async (
+export const doSafesFirstPass = async (
   config: Config,
   node: Safe
 ): Promise<SafeFirstPass> => {
   const children = node.children
     ? await Promise.all(
-        node.children.map((child) => traverseFirstPass(config, child))
+        node.children.map((child) => doSafesFirstPass(config, child))
       )
     : undefined;
 
@@ -59,8 +59,4 @@ const traverseFirstPass = async (
   } else {
     return { ...newNode };
   }
-};
-
-export const doSafesFirstPass = async (config: Config, safes: Safe[]) => {
-  return Promise.all(safes.map((safe) => traverseFirstPass(config, safe)));
 };
