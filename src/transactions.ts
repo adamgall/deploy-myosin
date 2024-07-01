@@ -94,11 +94,7 @@ export const createDeploySafeTransaction = (
     data: encodeFunctionData({
       abi: GnosisSafeProxyFactoryAbi,
       functionName: "createProxyWithNonce",
-      args: [
-        gnosisSafeL2SingletonAddress, // address _singleton
-        gnosisSafeInitializer, // bytes initializer
-        saltNonce, // uint256 saltNonce
-      ],
+      args: [gnosisSafeL2SingletonAddress, gnosisSafeInitializer, saltNonce],
     }),
   };
 };
@@ -116,11 +112,7 @@ export const createDeployModuleTransaction = (
     data: encodeFunctionData({
       abi: ModuleProxyFactoryAbi,
       functionName: "deployModule",
-      args: [
-        moduleMasterCopyAddress, // address masterCopy
-        moduleInitializer, // bytes initializer
-        saltNonce, // uint256 saltNonce
-      ],
+      args: [moduleMasterCopyAddress, moduleInitializer, saltNonce],
     }),
   };
 };
@@ -138,18 +130,18 @@ export const createSafeExecTransaction = (
       abi: GnosisSafeL2Abi,
       functionName: "execTransaction",
       args: [
-        target, // address to
-        0n, // uint256 value
-        data, // bytes data
-        1, // uint8 operation
-        0n, // uint256 safeTxGas
-        0n, // uint256 baseGas
-        0n, // uint256 gasPrice
-        zeroAddress, // address gasToken
-        zeroAddress, // address refundReceiver
+        target,
+        0n,
+        data,
+        1,
+        0n,
+        0n,
+        0n,
+        zeroAddress,
+        zeroAddress,
         `0x000000000000000000000000${target.slice(
           2
-        )}000000000000000000000000000000000000000000000000000000000000000001`, // bytes signatures
+        )}000000000000000000000000000000000000000000000000000000000000000001`,
       ],
     }),
   };
@@ -166,9 +158,7 @@ export const createEnableModuleTransaction = (
     data: encodeFunctionData({
       abi: GnosisSafeL2Abi,
       functionName: "enableModule",
-      args: [
-        predictedModuleAddress, // address module
-      ],
+      args: [predictedModuleAddress],
     }),
   };
 };
@@ -202,11 +192,7 @@ export const createRemoveOwnerTransaction = (
     data: encodeFunctionData({
       abi: GnosisSafeL2Abi,
       functionName: "removeOwner",
-      args: [
-        otherOwners[otherOwners.length - 1], // address prevOwner
-        ownerToRemove, // address owner
-        threshold, // uint256 _threshold
-      ],
+      args: [otherOwners[otherOwners.length - 1], ownerToRemove, threshold],
     }),
   };
 };
@@ -222,9 +208,7 @@ export const createUpdateDaoNameTransaction = (
     data: encodeFunctionData({
       abi: FractalRegistryAbi,
       functionName: "updateDAOName",
-      args: [
-        daoName, // string _name
-      ],
+      args: [daoName],
     }),
   };
 };
@@ -240,9 +224,7 @@ export const createDeclareSubDaoTransaction = (
     data: encodeFunctionData({
       abi: FractalRegistryAbi,
       functionName: "declareSubDAO",
-      args: [
-        subDaoAddress, // address _subDAOAddress
-      ],
+      args: [subDaoAddress],
     }),
   };
 };

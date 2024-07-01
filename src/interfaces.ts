@@ -20,9 +20,9 @@ export interface Safe {
   children?: Safe[];
 }
 
-export interface SafeProcessed extends Safe {
-  children?: SafeProcessed[];
-  firstPass: {
+export interface SafeWithDerivedData extends Safe {
+  children?: SafeWithDerivedData[];
+  derivedData: {
     saltNonce: bigint;
     initializationData: Hex;
     predictedAddress: Address;
@@ -32,7 +32,7 @@ export interface SafeProcessed extends Safe {
 export interface Token {
   name: string;
   symbol: string;
-  supply: bigint;
+  totalSupply: bigint;
 }
 
 export interface Airdrop {
@@ -40,14 +40,25 @@ export interface Airdrop {
   amount: bigint;
 }
 
+export interface FreezeConfig {
+  freezeVotesThreshold: bigint;
+  freezeProposalPeriod: number;
+  freezePeriod: number;
+  timelockPeriod: number;
+  executionPeriod: number;
+}
+
 export interface Data {
   token: Token;
   airdrop: Airdrop[];
   safes: Safe;
+
+  // All Safes (other than top) will have same Freeze configuration
+  freezeConfig: FreezeConfig;
 }
 
 export interface DataProcessed extends Data {
-  safes: SafeProcessed;
+  safes: SafeWithDerivedData;
 }
 
 export interface Config {

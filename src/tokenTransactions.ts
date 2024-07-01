@@ -4,16 +4,21 @@ import {
   parseAbiParameters,
 } from "viem";
 import { VotesErc20Abi } from "./abis";
-import { Airdrop, Config, DataProcessed, SafeProcessed } from "./interfaces";
+import {
+  Airdrop,
+  Config,
+  DataProcessed,
+  SafeWithDerivedData,
+} from "./interfaces";
 import {
   createDeployModuleTransaction,
   generateSaltNonce,
 } from "./transactions";
 
-const gatherSafesAllocations = (node: SafeProcessed): Airdrop[] => {
+const gatherSafesAllocations = (node: SafeWithDerivedData): Airdrop[] => {
   const allocations: Airdrop[] = [
     {
-      address: node.firstPass.predictedAddress,
+      address: node.derivedData.predictedAddress,
       amount: node.allocation,
     },
   ];
@@ -38,7 +43,7 @@ export const createTokenTransactions = async (
 
   const totalAllocations = allAllocations.reduce((p, c) => p + c.amount, 0n);
 
-  if (totalAllocations !== data.token.supply) {
+  if (totalAllocations !== data.token.totalSupply) {
     throw new Error("total airdrop amount doesn't equal total supply");
   }
 

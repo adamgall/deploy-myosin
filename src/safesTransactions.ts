@@ -5,7 +5,7 @@ import {
   parseAbiParameters,
   zeroAddress,
 } from "viem";
-import { Config, SafeProcessed } from "./interfaces";
+import { Config, FreezeConfig, SafeWithDerivedData } from "./interfaces";
 import {
   createDeclareSubDaoTransaction,
   createDeployModuleTransaction,
@@ -27,7 +27,8 @@ import {
 
 const getMultiSendsFromSafe = (
   config: Config,
-  node: SafeProcessed,
+  freezeConfig: FreezeConfig,
+  node: SafeWithDerivedData,
   nodeAddress: Address,
   parentAddress: Address,
   saltNonce: bigint
@@ -41,12 +42,7 @@ const getMultiSendsFromSafe = (
       args: [
         encodeAbiParameters(
           parseAbiParameters("address, address, address, address[]"),
-          [
-            parentAddress, // address _owner
-            nodeAddress, // address _avatar
-            nodeAddress, // address _target
-            [], // address[] _controllers
-          ]
+          [parentAddress, nodeAddress, nodeAddress, []]
         ),
       ],
     });
@@ -79,9 +75,9 @@ const getMultiSendsFromSafe = (
           parseAbiParameters("address, uint256, uint32, uint32, address"),
           [
             parentAddress,
-            0n, // TODO freezeVotesThreshold,
-            0, // TODO freezeProposalPeriod,
-            0, // TODO freezePeriod,
+            freezeConfig.freezeVotesThreshold,
+            freezeConfig.freezeProposalPeriod,
+            freezeConfig.freezePeriod,
             parentAddress,
           ]
         ),
@@ -111,8 +107,8 @@ const getMultiSendsFromSafe = (
         encodeAbiParameters(
           parseAbiParameters("uint32, uint32, address, address, address"),
           [
-            0, // TODO timelockPeriod,
-            0, // TODO executionPeriod,
+            freezeConfig.timelockPeriod,
+            freezeConfig.executionPeriod,
             parentAddress,
             predictedMultisigFreezeVotingAddress,
             nodeAddress,
@@ -157,7 +153,7 @@ const getMultiSendsFromSafe = (
       transactions.push(
         createDeclareSubDaoTransaction(
           config.contractAddresses.fractalRegistryAddress,
-          child.firstPass.predictedAddress
+          child.derivedData.predictedAddress
         )
       );
     });
@@ -177,22 +173,24 @@ const getMultiSendsFromSafe = (
 
 const processNode = async (
   config: Config,
-  node: SafeProcessed,
+  freezeConfig: FreezeConfig,
+  node: SafeWithDerivedData,
   parentAddress: Address
 ) => {
   const deploySafeTransaction = createDeploySafeTransaction(
     config.contractAddresses.gnosisSafeProxyFactoryAddress,
     config.contractAddresses.gnosisSafeL2SingletonAddress,
-    node.firstPass.initializationData,
-    node.firstPass.saltNonce
+    node.derivedData.initializationData,
+    node.derivedData.saltNonce
   );
 
   const multiSendsFromSafe = getMultiSendsFromSafe(
     config,
+    freezeConfig,
     node,
-    node.firstPass.predictedAddress,
+    node.derivedData.predictedAddress,
     parentAddress,
-    node.firstPass.saltNonce
+    node.derivedData.saltNonce
   );
 
   const multiSendData = encodeFunctionData({
@@ -202,7 +200,7 @@ const processNode = async (
   });
 
   const processSafeTransaction = createSafeExecTransaction(
-    node.firstPass.predictedAddress,
+    node.derivedData.predictedAddress,
     config.contractAddresses.multiSendCallOnlyAddress,
     multiSendData
   );
@@ -216,7 +214,8 @@ const processNode = async (
 
 export const createSafesTransactions = async (
   config: Config,
-  node: SafeProcessed,
+  freezeConfig: FreezeConfig,
+  node: SafeWithDerivedData,
   parentAddress?: Address,
   transactions?: {
     operation: number;
@@ -225,7 +224,12 @@ export const createSafesTransactions = async (
     data: `0x${string}`;
   }[]
 ) => {
-  const newNode = await processNode(config, node, parentAddress ?? zeroAddress);
+  const newNode = await processNode(
+    config,
+    freezeConfig,
+    node,
+    parentAddress ?? zeroAddress
+  );
   let accumulatedTransactions = [
     ...(transactions ?? []),
     ...newNode.allNodeTransactions,
@@ -235,8 +239,9 @@ export const createSafesTransactions = async (
     for (const child of node.children) {
       accumulatedTransactions = await createSafesTransactions(
         config,
+        freezeConfig,
         child,
-        node.firstPass.predictedAddress,
+        node.derivedData.predictedAddress,
         accumulatedTransactions
       );
     }

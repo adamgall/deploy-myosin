@@ -11,7 +11,7 @@ import {
   Data,
   DataProcessed,
   Safe,
-  SafeProcessed,
+  SafeWithDerivedData,
   Token,
 } from "./interfaces";
 import { generateSaltNonce, getPredictedSafeAddress } from "./transactions";
@@ -24,14 +24,14 @@ const calculateSafeData = async (config: Config, node: Safe) => {
     abi: GnosisSafeL2Abi,
     functionName: "setup",
     args: [
-      [...node.owners, config.contractAddresses.multiSendCallOnlyAddress], // address[] _owners
-      1n, // uint256 _threshold // hardcode to 1
-      zeroAddress, // address to
-      zeroHash, // bytes data
-      config.contractAddresses.compatibilityFallbackHandlerAddress, // address fallbackHandler
-      zeroAddress, // address paymentToken
-      0n, // uint256 payment
-      zeroAddress, // address paymentReceiver
+      [...node.owners, config.contractAddresses.multiSendCallOnlyAddress],
+      1n,
+      zeroAddress,
+      zeroHash,
+      config.contractAddresses.compatibilityFallbackHandlerAddress,
+      zeroAddress,
+      0n,
+      zeroAddress,
     ],
   });
 
@@ -47,12 +47,12 @@ const calculateSafeData = async (config: Config, node: Safe) => {
     saltNonce
   );
 
-  const safeFirstPass: SafeProcessed = {
+  const safeFirstPass: SafeWithDerivedData = {
     name: node.name,
     owners: node.owners,
     threshold: node.threshold,
     allocation: parseEther(node.allocation.toString()),
-    firstPass: {
+    derivedData: {
       saltNonce,
       initializationData,
       predictedAddress,
@@ -65,7 +65,7 @@ const calculateSafeData = async (config: Config, node: Safe) => {
 const doSafesFirstPass = async (
   config: Config,
   node: Safe
-): Promise<SafeProcessed> => {
+): Promise<SafeWithDerivedData> => {
   const children = node.children
     ? await Promise.all(
         node.children.map((child) => doSafesFirstPass(config, child))
@@ -90,7 +90,7 @@ const doAirdropsFirstPass = (airdrops: Airdrop[]): Airdrop[] => {
 const doTokenFirstPass = (token: Token): Token => {
   return {
     ...token,
-    supply: parseEther(token.supply.toString()),
+    totalSupply: parseEther(token.totalSupply.toString()),
   };
 };
 
@@ -106,5 +106,6 @@ export const processData = async (
     token: tokenFirstPass,
     airdrop: airdropsFirstPass,
     safes: safesFirstPass,
+    freezeConfig: data.freezeConfig,
   };
 };

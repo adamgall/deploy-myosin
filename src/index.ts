@@ -13,7 +13,11 @@ import { createTokenTransactions } from "./tokenTransactions";
 
   const allMultiSendTransactions = [
     ...(await createTokenTransactions(config, processedData)),
-    ...(await createSafesTransactions(config, processedData.safes)),
+    ...(await createSafesTransactions(
+      config,
+      processedData.freezeConfig,
+      processedData.safes
+    )),
   ];
 
   const encodedMultiSendTransactions = encodeMultiSend(
