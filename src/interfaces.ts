@@ -41,7 +41,6 @@ export interface Airdrop {
 }
 
 export interface FreezeConfig {
-  freezeVotesThreshold: bigint;
   freezeProposalPeriod: number;
   freezePeriod: number;
   timelockPeriod: number;

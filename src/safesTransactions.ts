@@ -31,7 +31,8 @@ const getMultiSendsFromSafe = (
   node: SafeWithDerivedData,
   nodeAddress: Address,
   parentAddress: Address,
-  saltNonce: bigint
+  saltNonce: bigint,
+  parentSafeThreshold?: bigint
 ) => {
   const transactions = [];
 
@@ -67,6 +68,10 @@ const getMultiSendsFromSafe = (
       createEnableModuleTransaction(nodeAddress, predictedFractalModuleAddress)
     );
 
+    if (parentSafeThreshold === undefined) {
+      throw new Error("parentSafeThreshold not set");
+    }
+
     const multisigFreezeVotingInitializer = encodeFunctionData({
       abi: MultisigFreezeVotingAbi,
       functionName: "setUp",
@@ -75,7 +80,7 @@ const getMultiSendsFromSafe = (
           parseAbiParameters("address, uint256, uint32, uint32, address"),
           [
             parentAddress,
-            freezeConfig.freezeVotesThreshold,
+            parentSafeThreshold,
             freezeConfig.freezeProposalPeriod,
             freezeConfig.freezePeriod,
             parentAddress,
@@ -175,7 +180,8 @@ const processNode = async (
   config: Config,
   freezeConfig: FreezeConfig,
   node: SafeWithDerivedData,
-  parentAddress: Address
+  parentAddress: Address,
+  parentSafeThreshold?: bigint
 ) => {
   const deploySafeTransaction = createDeploySafeTransaction(
     config.contractAddresses.gnosisSafeProxyFactoryAddress,
@@ -190,7 +196,8 @@ const processNode = async (
     node,
     node.derivedData.predictedAddress,
     parentAddress,
-    node.derivedData.saltNonce
+    node.derivedData.saltNonce,
+    parentSafeThreshold
   );
 
   const multiSendData = encodeFunctionData({
@@ -217,6 +224,7 @@ export const createSafesTransactions = async (
   freezeConfig: FreezeConfig,
   node: SafeWithDerivedData,
   parentAddress?: Address,
+  parentSafeThreshold?: bigint,
   transactions?: {
     operation: number;
     to: `0x${string}`;
@@ -228,7 +236,8 @@ export const createSafesTransactions = async (
     config,
     freezeConfig,
     node,
-    parentAddress ?? zeroAddress
+    parentAddress ?? zeroAddress,
+    parentSafeThreshold
   );
   let accumulatedTransactions = [
     ...(transactions ?? []),
@@ -242,6 +251,7 @@ export const createSafesTransactions = async (
         freezeConfig,
         child,
         node.derivedData.predictedAddress,
+        node.threshold,
         accumulatedTransactions
       );
     }
