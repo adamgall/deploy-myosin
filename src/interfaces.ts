@@ -1,12 +1,4 @@
-import {
-  Account,
-  Address,
-  Chain,
-  Hex,
-  PublicClient,
-  Transport,
-  WalletClient,
-} from "viem";
+import { Address, Chain, Hex, HttpTransport, PublicClient } from "viem";
 
 export const twoAddress = "0x0000000000000000000000000000000000000002";
 export const threeAddress = "0x0000000000000000000000000000000000000003";
@@ -61,8 +53,7 @@ export interface DataProcessed extends Data {
 }
 
 export interface Config {
-  publicClient: PublicClient<Transport, Chain>;
-  walletClient: WalletClient<Transport, Chain, Account> | undefined;
+  publicClient: PublicClient<HttpTransport, Chain>;
   contractAddresses: {
     fractalRegistryAddress: Address;
     multiSendCallOnlyAddress: Address;

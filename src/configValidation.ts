@@ -1,16 +1,21 @@
 import { getConfigRaw } from "./configParsing";
-import { getPublicClient, getWalletClient } from "./clients";
 import { Config } from "./interfaces";
+import { Chain, createPublicClient, http } from "viem";
+
+const getPublicClient = (chain: Chain) => {
+  return createPublicClient({
+    chain,
+    transport: http(),
+  });
+};
 
 export const getValidatedConfig = async () => {
   const configRaw = getConfigRaw();
 
   const publicClient = getPublicClient(configRaw.chain);
-  const walletClient = getWalletClient(configRaw.chain, configRaw.privateKey);
 
   const config: Config = {
     publicClient,
-    walletClient,
     contractAddresses: {
       fractalRegistryAddress: configRaw.fractalRegistryAddress,
       multiSendCallOnlyAddress: configRaw.multiSendCallOnlyAddress,
