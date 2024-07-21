@@ -17,11 +17,3 @@ IMPORTANT! Configure your environment using the `.env` file before running the s
 If your `PRIVATE_KEY` is not set or malformed, a simulation transaction will be executed instead of the real thing.
 
 Run the script with `npx tsx src`
-
-## Intention
-
-TODO
-
-## Testing
-
-TODO
